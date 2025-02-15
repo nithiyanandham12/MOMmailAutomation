@@ -1,3 +1,4 @@
+python==3.10
 streamlit
 openai
 groq
@@ -7,3 +8,4 @@ torchaudio
 python-dotenv
 email-validator
 ffmpeg-python
+ffmpeg
