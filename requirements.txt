@@ -1,0 +1,10 @@
+streamlit
+openai
+groq
+whisper
+smtplib
+dotenv
+email
+re
+tempfile
+time
