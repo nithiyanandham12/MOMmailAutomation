@@ -10,12 +10,13 @@ from groq import Groq
 import tempfile
 import time
 import re
-
+import os
 # Load environment variables
 load_dotenv()
-groq_api_key = os.getenv("GROQ_API_KEY")
-email_sender = os.getenv("EMAIL_SENDER")
-email_password = os.getenv("EMAIL_PASSWORD")
+huggingface_api_key = st.secrets["HUGGINGFACE_API_KEY"]
+groq_api_key = st.secrets["GROQ_API_KEY"]
+email_sender = st.secrets["EMAIL_SENDER"]
+email_password = st.secrets["EMAIL_PASSWORD"]
 
 client = Groq(api_key=groq_api_key)
 
