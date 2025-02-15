@@ -2,14 +2,7 @@ streamlit
 openai
 groq
 whisper
-dotenv
-email
-re
-tempfile
-time
-streamlit
-openai
-groq
-whisper
+torch
+torchaudio
 python-dotenv
 email-validator
