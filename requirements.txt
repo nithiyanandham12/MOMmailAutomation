@@ -8,3 +8,9 @@ email
 re
 tempfile
 time
+streamlit
+openai
+groq
+whisper
+python-dotenv
+email-validator
