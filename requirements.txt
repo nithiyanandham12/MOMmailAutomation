@@ -6,3 +6,4 @@ torch
 torchaudio
 python-dotenv
 email-validator
+ffmpeg-python
