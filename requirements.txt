@@ -1,11 +1,8 @@
 streamlit
-openai
-groq
-whisper
-torch
-torchaudio
-python-dotenv
-email-validator
-ffmpeg-python
 vosk
 soundfile
+pydub
+ffmpeg
+groq
+python-dotenv
+smtplib
