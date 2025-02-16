@@ -1,18 +1,15 @@
 import streamlit as st
 import os
-import wave
 import json
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from vosk import Model, KaldiRecognizer
-import soundfile as sf
-from pydub import AudioSegment
-from pydub.utils import mediainfo
-from dotenv import load_dotenv
-from groq import Groq
+from whisper_timestamped.transcribe import transcribe
 import tempfile
 import time
+from dotenv import load_dotenv
+from groq import Groq
+from pydub import AudioSegment
 
 # Load environment variables
 load_dotenv()
@@ -41,59 +38,25 @@ if "meeting_summary" not in st.session_state:
 if "mom_template_clean" not in st.session_state:
     st.session_state.mom_template_clean = ""
 
-# Load Vosk model once
-model = Model(lang="en-us")
-
 # Function to convert any audio format to WAV
 def convert_to_wav(file_path):
-    try:
-        # Print original file details for debugging
-        info = mediainfo(file_path)
-        print(f"🔍 Original file format: {info['format_name']} | Sample Rate: {info['sample_rate']} Hz | Channels: {info['channels']}")
+    temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix=".wav").name
+    audio = AudioSegment.from_file(file_path)
+    audio = audio.set_channels(1).set_frame_rate(16000)  # Convert to mono, 16kHz
+    audio.export(temp_wav, format="wav")
+    return temp_wav
 
-        # Create a temporary WAV file
-        temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix=".wav").name
-
-        # Convert using pydub
-        audio = AudioSegment.from_file(file_path)
-        audio = audio.set_channels(1).set_frame_rate(16000)  # Convert to mono, 16kHz (for Vosk)
-        audio.export(temp_wav, format="wav")
-
-        # Verify conversion
-        info_after = mediainfo(temp_wav)
-        print(f"✅ Converted to WAV: {info_after['format_name']} | Sample Rate: {info_after['sample_rate']} Hz | Channels: {info_after['channels']}")
-
-        return temp_wav
-    except Exception as e:
-        print(f"🚨 Error converting file to WAV: {e}")
-        return None
-
-# Transcription Function Using Vosk
-def transcribe_audio(file_path):
-    # Convert non-WAV files to WAV
+# Function to Transcribe Using `whisper-timestamped`
+def transcribe_audio_whisper(file_path):
+    # Convert to WAV if necessary
     if not file_path.endswith(".wav"):
         file_path = convert_to_wav(file_path)
-        if file_path is None:
-            raise ValueError("🚨 Error: Audio file conversion failed.")
 
-    # Verify the file is a valid WAV
-    try:
-        wf = wave.open(file_path, "rb")
-    except wave.Error as e:
-        raise ValueError(f"🚨 wave.Error: The file is not a valid WAV format. Details: {e}")
+    # Transcribe using whisper-timestamped
+    result = transcribe(file_path, model="small")  # Choose a smaller model to reduce memory usage
+    transcript_text = " ".join([seg["text"] for seg in result["segments"]])
 
-    rec = KaldiRecognizer(model, wf.getframerate())
-
-    transcription = ""
-    while True:
-        data = wf.readframes(4000)
-        if len(data) == 0:
-            break
-        if rec.AcceptWaveform(data):
-            result = json.loads(rec.Result())
-            transcription += result["text"] + " "
-
-    return transcription.strip()
+    return transcript_text
 
 # Process uploaded file
 if uploaded_file and not st.session_state.transcript_text:
@@ -103,15 +66,14 @@ if uploaded_file and not st.session_state.transcript_text:
 
     st.sidebar.markdown("### 🔍 Transcribing Meeting... Please wait!")
     progress_bar = st.sidebar.progress(0)
-    
-    # Simulate progress
+
     def update_progress():
         for i in range(1, 101, 10):
             time.sleep(0.5)
             progress_bar.progress(i)
-    
+
     update_progress()
-    st.session_state.transcript_text = transcribe_audio(temp_audio_path)
+    st.session_state.transcript_text = transcribe_audio_whisper(temp_audio_path)
     progress_bar.empty()
 
     # Generating Summary
