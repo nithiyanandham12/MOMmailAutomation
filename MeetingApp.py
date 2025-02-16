@@ -45,7 +45,7 @@ if uploaded_file and not st.session_state.transcript_text:
     
     st.sidebar.markdown("### 🔍 Transcribing Meeting... Please wait!")
     progress_bar = st.sidebar.progress(0)
-    model = whisper.load_model("base")
+    model = whisper.load_model("tiny")
     
     def update_progress():
         for i in range(1, 101, 10):
