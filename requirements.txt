@@ -1,3 +1,4 @@
+groq
 streamlit
 faster-whisper
 pydub
