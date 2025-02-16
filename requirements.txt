@@ -1,7 +1,5 @@
 streamlit
-vosk
-soundfile
+whisper-timestamped
 pydub
 ffmpeg
-groq
 python-dotenv
