@@ -46,9 +46,12 @@ model = Model(lang="en-us")
 # Function to convert any audio format to WAV
 def convert_to_wav(file_path):
     temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix=".wav").name
+    
+    # Convert using pydub (supports MP3, MP4, AVI, etc.)
     audio = AudioSegment.from_file(file_path)
     audio = audio.set_channels(1).set_frame_rate(16000)  # Convert to mono, 16kHz (for Vosk)
     audio.export(temp_wav, format="wav")
+    
     return temp_wav
 
 # Transcription Function Using Vosk
