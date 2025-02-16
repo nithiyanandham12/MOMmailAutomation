@@ -7,3 +7,5 @@ torchaudio
 python-dotenv
 email-validator
 ffmpeg-python
+vosk
+soundfile
