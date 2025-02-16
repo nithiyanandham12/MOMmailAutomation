@@ -5,4 +5,3 @@ pydub
 ffmpeg
 groq
 python-dotenv
-smtplib
