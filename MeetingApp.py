@@ -7,6 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from vosk import Model, KaldiRecognizer
 import soundfile as sf
+from pydub import AudioSegment
 from dotenv import load_dotenv
 from groq import Groq
 import tempfile
@@ -27,7 +28,7 @@ st.markdown("Upload your meeting audio/video and get a structured summary & MoM 
 
 # Sidebar for Upload & Email Input
 st.sidebar.header("📂 Upload & Email")
-uploaded_file = st.sidebar.file_uploader("Upload a Meeting Audio/Video (MP3, WAV, MP4)", type=["mp3", "wav", "mp4"])
+uploaded_file = st.sidebar.file_uploader("Upload a Meeting Audio/Video (MP3, WAV, MP4, AVI)", type=["mp3", "wav", "mp4", "avi"])
 email_recipient = st.sidebar.text_input("📧 Enter recipient email(s) (comma-separated)")
 email_cc = st.sidebar.text_input("📧 Enter CC email(s) (comma-separated, optional)")
 
@@ -39,9 +40,24 @@ if "meeting_summary" not in st.session_state:
 if "mom_template_clean" not in st.session_state:
     st.session_state.mom_template_clean = ""
 
+# Load Vosk model once
+model = Model(lang="en-us")
+
+# Function to convert any audio format to WAV
+def convert_to_wav(file_path):
+    temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix=".wav").name
+    audio = AudioSegment.from_file(file_path)
+    audio = audio.set_channels(1).set_frame_rate(16000)  # Convert to mono, 16kHz (for Vosk)
+    audio.export(temp_wav, format="wav")
+    return temp_wav
+
 # Transcription Function Using Vosk
 def transcribe_audio(file_path):
-    model = Model(lang="en-us")  # Load Vosk model
+    # Convert non-WAV files to WAV
+    if not file_path.endswith(".wav"):
+        file_path = convert_to_wav(file_path)
+
+    # Process with Vosk
     wf = wave.open(file_path, "rb")
     rec = KaldiRecognizer(model, wf.getframerate())
 
