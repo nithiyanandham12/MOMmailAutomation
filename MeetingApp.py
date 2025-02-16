@@ -1,6 +1,8 @@
 import streamlit as st
 import os
+import whisper
 import smtplib
+import openai
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
@@ -43,6 +45,7 @@ if uploaded_file and not st.session_state.transcript_text:
     
     st.sidebar.markdown("### 🔍 Transcribing Meeting... Please wait!")
     progress_bar = st.sidebar.progress(0)
+    model = whisper.load_model("base")
     
     def update_progress():
         for i in range(1, 101, 10):
@@ -50,15 +53,8 @@ if uploaded_file and not st.session_state.transcript_text:
             progress_bar.progress(i)
     
     update_progress()
-    
-    with open(temp_video_path, "rb") as file:
-        transcription = client.audio.transcriptions.create(
-            file=(temp_video_path, file.read()),
-            model="whisper-large-v3-turbo",
-            response_format="verbose_json",
-        )
-        st.session_state.transcript_text = transcription.text
-    
+    transcription = model.transcribe(temp_video_path, verbose=True)
+    st.session_state.transcript_text = transcription["text"]
     progress_bar.empty()
     
     # Generating Summary
