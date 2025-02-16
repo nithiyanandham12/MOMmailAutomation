@@ -1,5 +1,5 @@
 streamlit
-whisper-timestamped
+faster-whisper
 pydub
 ffmpeg
 python-dotenv
