@@ -8,6 +8,7 @@ from email.mime.text import MIMEText
 from vosk import Model, KaldiRecognizer
 import soundfile as sf
 from pydub import AudioSegment
+from pydub.utils import mediainfo
 from dotenv import load_dotenv
 from groq import Groq
 import tempfile
@@ -45,23 +46,42 @@ model = Model(lang="en-us")
 
 # Function to convert any audio format to WAV
 def convert_to_wav(file_path):
-    temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix=".wav").name
-    
-    # Convert using pydub (supports MP3, MP4, AVI, etc.)
-    audio = AudioSegment.from_file(file_path)
-    audio = audio.set_channels(1).set_frame_rate(16000)  # Convert to mono, 16kHz (for Vosk)
-    audio.export(temp_wav, format="wav")
-    
-    return temp_wav
+    try:
+        # Print original file details for debugging
+        info = mediainfo(file_path)
+        print(f"🔍 Original file format: {info['format_name']} | Sample Rate: {info['sample_rate']} Hz | Channels: {info['channels']}")
+
+        # Create a temporary WAV file
+        temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix=".wav").name
+
+        # Convert using pydub
+        audio = AudioSegment.from_file(file_path)
+        audio = audio.set_channels(1).set_frame_rate(16000)  # Convert to mono, 16kHz (for Vosk)
+        audio.export(temp_wav, format="wav")
+
+        # Verify conversion
+        info_after = mediainfo(temp_wav)
+        print(f"✅ Converted to WAV: {info_after['format_name']} | Sample Rate: {info_after['sample_rate']} Hz | Channels: {info_after['channels']}")
+
+        return temp_wav
+    except Exception as e:
+        print(f"🚨 Error converting file to WAV: {e}")
+        return None
 
 # Transcription Function Using Vosk
 def transcribe_audio(file_path):
     # Convert non-WAV files to WAV
     if not file_path.endswith(".wav"):
         file_path = convert_to_wav(file_path)
+        if file_path is None:
+            raise ValueError("🚨 Error: Audio file conversion failed.")
 
-    # Process with Vosk
-    wf = wave.open(file_path, "rb")
+    # Verify the file is a valid WAV
+    try:
+        wf = wave.open(file_path, "rb")
+    except wave.Error as e:
+        raise ValueError(f"🚨 wave.Error: The file is not a valid WAV format. Details: {e}")
+
     rec = KaldiRecognizer(model, wf.getframerate())
 
     transcription = ""
