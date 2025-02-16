@@ -4,7 +4,7 @@ import json
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from whisper_timestamped.transcribe import transcribe
+from faster_whisper import WhisperModel
 import tempfile
 import time
 from dotenv import load_dotenv
@@ -46,15 +46,18 @@ def convert_to_wav(file_path):
     audio.export(temp_wav, format="wav")
     return temp_wav
 
-# Function to Transcribe Using `whisper-timestamped`
+# Function to Transcribe Using `faster-whisper`
 def transcribe_audio_whisper(file_path):
     # Convert to WAV if necessary
     if not file_path.endswith(".wav"):
         file_path = convert_to_wav(file_path)
 
-    # Transcribe using whisper-timestamped
-    result = transcribe(file_path, model="small")  # Choose a smaller model to reduce memory usage
-    transcript_text = " ".join([seg["text"] for seg in result["segments"]])
+    # Load the Whisper model (choose a lightweight model for better performance)
+    model = WhisperModel("small", compute_type="int8")
+
+    # Transcribe
+    segments, _ = model.transcribe(file_path)
+    transcript_text = " ".join([seg.text for seg in segments])
 
     return transcript_text
 
